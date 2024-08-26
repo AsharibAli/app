@@ -8,7 +8,7 @@ interface OCIDProviderProps {
 }
 
 const opts = {
-  redirectUri: "https://demo.ced.asharib.xyz/redirect",
+  redirectUri: "http://localhost:3000/redirect",
 };
 
 const OCIDProvider: FC<OCIDProviderProps> = ({ children }) => (

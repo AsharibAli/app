@@ -1,232 +1,83 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import Web3 from "web3";
-import contractJson from "@/contracts/Greeter.sol/Greeter.json";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import LoginButton from "@/components/LoginButton";
-import { useOCAuth } from "@opencampus/ocid-connect-js";
-import { jwtDecode } from "jwt-decode";
-import { Contracts } from "@/types";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 
-interface DecodedToken {
-  edu_username: string;
-  [key: string]: any;
-}
+const dapps = [
+  {
+    title: "Simple Greeting",
+    description: "Send and receive greetings on the blockchain",
+    features: ["Simple greetings dapp", "Send and receive greetings onchain", "Display the last greeting"],
+    route: "/simple-greeting-dapp"
+  },
+  {
+    title: "Study Timer Tracker",
+    description: "Track study time on the blockchain",
+    features: ["Start and stop a study timer", "Record study session duration", "Display total study time"],
+    route: "/study-time-dapp"
+  },
+  {
+    title: "Student Anonymous Feedback",
+    description: "Submit anonymous feedback about courses",
+    features: ["Simple feedback form", "Store feedback on-chain anonymously",`Only educators with ocid usernames that start with 'edu_' can view aggregated feedback.`],
+    route: "/anonymous-feedback-dapp"
+  },
+  {
+    title: "Assignment Submission",
+    description: "Submit proof of assignment completion",
+    features: ["Upload assignment details", "Store submission details on-chain", `Only educators ocid with usernames that start with 'edu_' can verify and view submissions.`],
+    route: "/assignment-submission-dapp"
+  },
+  {
+    title: "Classroom Poll",
+    description: "Conduct quick polls during class sessions",
+    features: ["Create and display polls", "Record votes on-chain", "Real-time poll results"],
+    route: "/class-poll-dapp"
+  },
+  {
+    title: "Study Group Chat",
+    description: "Students share messages in a group chat.",
+    features: ["Join group chat and share messages", "Record messages on-chain", "Show the Messages"],
+    route: "/student-group-dapp"
+  }
+]
 
-const App: React.FC = () => {
-  const { authState } = useOCAuth();
-  const [mmStatus, setMmStatus] = useState<string>("Not connected!");
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [accountAddress, setAccountAddress] = useState<string | undefined>(
-    undefined
-  );
-  const [displayMessage, setDisplayMessage] = useState<string>("");
-  const [web3, setWeb3] = useState<Web3 | undefined>(undefined);
-  const [getNetwork, setGetNetwork] = useState<number | undefined>(undefined);
-  const [contracts, setContracts] = useState<Contracts | undefined>(undefined);
-  const [contractAddress, setContractAddress] = useState<string | undefined>(
-    undefined
-  );
-  const [loading, setLoading] = useState<boolean>(false);
-  const [txnHash, setTxnHash] = useState<string | null>(null);
-  const [showMessage, setShowMessage] = useState<boolean>(false);
-  const [ocidUsername, setOcidUsername] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Check if user is logged in with OCID
-    if (authState.idToken) {
-      const decodedToken = jwtDecode<DecodedToken>(authState.idToken);
-      setOcidUsername(decodedToken.edu_username);
-    }
-
-    // Initialize Web3 and set contract
-    (async () => {
-      try {
-        if (typeof window.ethereum !== "undefined") {
-          const web3 = new Web3(window.ethereum);
-          setWeb3(web3);
-          const networkId: any = await web3.eth.getChainId();
-          setGetNetwork(networkId);
-          const contractAddress = "0x48D2d71e26931a68A496F66d83Ca2f209eA9956E";
-          setContractAddress(contractAddress);
-          const Greeter = new web3.eth.Contract(
-            contractJson.abi,
-            contractAddress
-          ) as Contracts;
-          setContracts(Greeter);
-          Greeter.setProvider(window.ethereum);
-        } else {
-          alert("Please install MetaMask!");
-        }
-      } catch (error) {
-        console.error("Failed to initialize web3 or contract:", error);
-      }
-    })();
-  }, [authState.idToken]);
-
-  const ConnectWallet = async () => {
-    // Connect to MetaMask and handle errors
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        const chainId = await window.ethereum.request({
-          method: "eth_chainId",
-        });
-        if (chainId !== "0xa045c") {
-          alert(
-            `Please connect to the "Open Campus Codex" network in Metamask.`
-          );
-          return;
-        }
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        const accounts = await window.ethereum.request({
-          method: "eth_accounts",
-        });
-        setAccountAddress(accounts[0]);
-        setMmStatus("Connected!");
-        setIsConnected(true);
-      } catch (error) {
-        console.error("Failed to connect to wallet:", error);
-      }
-    } else {
-      alert("Please install MetaMask!");
-    }
-  };
-
-  const receive = async () => {
-    // Fetch message from the blockchain
-    if (contracts) {
-      try {
-        const displayMessage = await contracts.methods.read().call();
-        setDisplayMessage(displayMessage);
-      } catch (error) {
-        console.error("Failed to read from contract:", error);
-      }
-    }
-  };
-
-  const send = async () => {
-    // Send message to the blockchain
-    const getMessage = (document.getElementById("message") as HTMLInputElement)
-      .value;
-    if (!getMessage.trim()) {
-      alert("Message cannot be empty.");
-      return;
-    }
-    setLoading(true);
-    setShowMessage(true);
-    if (contracts && accountAddress) {
-      try {
-        await contracts.methods
-          .write(getMessage)
-          .send({ from: accountAddress })
-          .on("transactionHash", (hash: string) => {
-            setTxnHash(hash);
-          });
-        // Auto-refresh message after sending
-        await receive();
-      } catch (error) {
-        console.error("Failed to write to contract:", error);
-      }
-    }
-    setLoading(false);
-    setTimeout(() => {
-      setShowMessage(false);
-    }, 3000);
-  };
-
+export default function Home() {
   return (
-    <div className="App min-h-screen flex flex-col items-center justify-between">
-      <Header />
-      <div className="flex flex-col items-center justify-center flex-grow w-full mt-24 px-4">
-        <Card className="w-full max-w-2xl p-8 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-center text-4xl font-bold mt-4">
-              📚 create-edu-dapp template 📚
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center mt-4 space-y-6">
-            {!ocidUsername && <LoginButton />}
-            {ocidUsername && (
-              <div className="text-center text-xl">
-                <h1>
-                  👉Welcome,{" "}
-                  <a href="/user">
-                    <strong>{ocidUsername}👈</strong>
-                  </a>{" "}
-                </h1>
-              </div>
-            )}
-            {isConnected && (
-              <div className="text-center text-xl">
-                <h1>
-                  Connected to wallet address: <strong>{accountAddress}</strong>
-                </h1>
-              </div>
-            )}
-            {!isConnected && (
-              <Button
-                className="bg-teal-400 hover:bg-teal-700 text-black font-bold py-2 px-4 rounded-md mb-4"
-                onClick={ConnectWallet}
-                variant="link"
-              >
-                Connect with MetaMask
-              </Button>
-            )}
-            <div className="flex flex-col items-center">
-              <input
-                type="text"
-                placeholder="Enter a message to put onchain"
-                id="message"
-                className="w-80 bg-white rounded border border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:bg-white focus:border-indigo-500 text-base outline-none text-gray-700 px-3 leading-8 transition-colors duration-200 ease-in-out mb-4"
-              />
-              <div className="flex space-x-4">
-                <Button
-                  className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded"
-                  onClick={isConnected ? send : undefined}
-                >
-                  Send
-                </Button>
-                <Button
-                  className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded"
-                  onClick={isConnected ? receive : undefined}
-                >
-                  Receive
-                </Button>
-              </div>
-              {showMessage && (
-                <>
-                  <p className="text-center text-sm mt-6"> loading...</p>
-                  <p className="mt-4 text-xs ">
-                    Txn hash:{" "}
-                    <a
-                      className="text-teal-300"
-                      href={
-                        "https://opencampus-codex.blockscout.com/tx/" + txnHash
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {txnHash}
-                    </a>
-                  </p>
-                  <p className="mt-2 text-xs">
-                    Please wait till the Txn is completed :)
-                  </p>
-                </>
-              )}
-            </div>
-            <div className="text-center text-3xl mt-4">
-              <b>{displayMessage}</b>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen flex flex-col bg-teal-50">
+    <Header />
+    <main className="flex-grow container mx-auto px-4 py-20 my-10">
+      {/* Adjusted spacing */}
+      <div className="text-center mb-10">
+        <h1 className="text-5xl font-extrabold text-teal-800 mb-6">
+          create-edu-dapp templates
+        </h1>
+        <p className="text-2xl text-teal-600 max-w-2xl mx-auto leading-relaxed">
+        Explore our collection of educational dApps designed to help you build and ship fast on EduChain.
+        </p>
       </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {dapps.map((dapp, index) => (
+            <Link href={dapp.route} key={index} className="transform transition-transform hover:scale-105">
+              <Card className="h-full border-2 border-teal-200 hover:border-teal-400 bg-white shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-teal-700">{dapp.title}</CardTitle>
+                  <CardDescription className="text-teal-600">{dapp.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc list-inside text-teal-800">
+                    {dapp.features.map((feature, i) => (
+                      <li key={i}>{feature}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </main>
       <Footer />
     </div>
-  );
-};
-
-export default App;
+  )
+}
