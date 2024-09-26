@@ -8,13 +8,12 @@ interface OCIDProviderProps {
 }
 
 const opts = {
-  redirectUri: "http://localhost:3000/redirect",
+  redirectUri: "https://demo.ced.asharib.xyz/redirect",
+  referralCode: "PARTNER6",
 };
 
 const OCIDProvider: FC<OCIDProviderProps> = ({ children }) => (
-  <OCConnect opts={opts} sandboxMode={true}>
-    {children}
-  </OCConnect>
+  <OCConnect opts={opts}>{children}</OCConnect>
 );
 
 export default OCIDProvider;
