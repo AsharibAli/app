@@ -12,7 +12,18 @@ const Footer = () => {
           height="50"
         />
         <h1 className="text-xl text-black">
-          Learn more about Open Campus L3 <strong>(EduChain)</strong>,{" "}
+          Learn more about Open Campus L3{" "}
+          <strong>
+            <a
+              href="https://www.opencampus.xyz/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-300 no-underline hover:underline hover:text-teal-700"
+            >
+              (EduChain)
+            </a>{" "}
+          </strong>
+          ,{" "}
           <a
             className="text-teal-300 no-underline hover:underline hover:text-teal-700"
             href="https://open-campus-docs.vercel.app/"
