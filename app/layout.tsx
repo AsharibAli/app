@@ -7,9 +7,9 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Create Edu Dapp 🔥 | Nextjs & Hardhat 💻",
+  title: "Create Edu Dapp Demo🔥 ",
   description:
-    "A starter kit for building decentralized applications (Dapps) on the Open Campus L3 chain, powered by create-edu-dapp.",
+    "A starter kit for building (Dapps) on the Open Campus L3 (EduChain), powered by create-edu-dapp.",
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-        <Script
+      <Script
         async
         src="https://www.googletagmanager.com/gtag/js?id=G-0D5VHKEZ6B"
       ></Script>
