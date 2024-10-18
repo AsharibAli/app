@@ -9,7 +9,7 @@ interface OCIDProviderProps {
 
 const opts = {
   redirectUri: "https://demo.ced.asharib.xyz/redirect",
-  referralCode: "PARTNER6",
+  referralCode: "ASHARIB",
 };
 
 const OCIDProvider: FC<OCIDProviderProps> = ({ children }) => (
