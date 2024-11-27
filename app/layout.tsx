@@ -3,11 +3,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import OCIDProvider from "../components/OCIDProvider";
 import Script from "next/script";
+import Banner from "@/components/Banner";
+import { BannerProvider } from "@/components/BannerContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Create Edu Dapp Demo🔥 ",
+  title: "EduKit 🔥|  Starter Kit 💻",
   description:
     "A starter-kit featuring React & NextJS and Vue & NuxtJS with Hardhat or Foundry for building dApps on the Open Campus L3 (EduChain).",
 };
@@ -33,7 +35,12 @@ export default function RootLayout({
   `}
       </Script>
       <body className={inter.className}>
-        <OCIDProvider>{children}</OCIDProvider>
+        <OCIDProvider>
+          <BannerProvider>
+            <Banner />
+            {children}
+          </BannerProvider>
+        </OCIDProvider>
       </body>
     </html>
   );

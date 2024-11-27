@@ -12,25 +12,25 @@ const Footer = () => {
           height="50"
         />
         <h1 className="text-xl text-black">
-          Learn more about Open Campus L3{" "}
+          Build with ❤️ by{" "}
           <strong>
             <a
-              href="https://educhain.xyz/"
+              href="https://eduhub.dev/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-teal-300 no-underline hover:underline hover:text-teal-700"
             >
-              (EduChain)
+              EduHub
             </a>{" "}
           </strong>
-          ,{" "}
+          , Follow us on{" "}
           <a
             className="text-teal-300 no-underline hover:underline hover:text-teal-700"
-            href="https://open-campus-docs.vercel.app/"
+            href="https://x.com/eduhub__"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Go to Documentation.
+            X (Twitter).
           </a>
         </h1>
         <Image

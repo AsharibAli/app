@@ -7,7 +7,7 @@ const Header = () => {
         <h1>
           ⚡A starter kit for building{" "}
           <strong className="text-teal-300 no-underline hover:underline hover:text-teal-700">
-            (Dapps)
+            (dApps)
           </strong>{" "}
           on the Open Campus L3{" "}
           <strong>
