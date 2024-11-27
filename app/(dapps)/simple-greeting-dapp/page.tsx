@@ -10,6 +10,7 @@ import { jwtDecode } from "jwt-decode";
 import { Contracts } from "@/types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { MetaMaskConnect } from "@/components/MetaMaskConnect";
 
 interface DecodedToken {
   edu_username: string;
@@ -18,126 +19,50 @@ interface DecodedToken {
 
 const App: React.FC = () => {
   const { authState } = useOCAuth();
-  const [mmStatus, setMmStatus] = useState<string>("Not connected!");
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [accountAddress, setAccountAddress] = useState<string | undefined>(
-    undefined
-  );
   const [displayMessage, setDisplayMessage] = useState<string>("");
   const [web3, setWeb3] = useState<Web3 | undefined>(undefined);
-  const [getNetwork, setGetNetwork] = useState<number | undefined>(undefined);
   const [contracts, setContracts] = useState<Contracts | undefined>(undefined);
-  const [contractAddress, setContractAddress] = useState<string | undefined>(
-    undefined
-  );
   const [loading, setLoading] = useState<boolean>(false);
   const [txnHash, setTxnHash] = useState<string | null>(null);
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [ocidUsername, setOcidUsername] = useState<string | null>(null);
-
-  const switchToOpenCampusNetwork = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        // Try to switch to the Open Campus Codex network
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0xa045c" }], // 656476 in hexadecimal
-        });
-      } catch (switchError: any) {
-        // This error code indicates that the chain has not been added to MetaMask
-        if (switchError.code === 4902) {
-          try {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: "0xa045c",
-                  chainName: "Open Campus Codex",
-                  nativeCurrency: {
-                    name: "EDU",
-                    symbol: "EDU",
-                    decimals: 18,
-                  },
-                  rpcUrls: ["https://rpc.open-campus-codex.gelato.digital"],
-                  blockExplorerUrls: ["https://opencampus-codex.blockscout.com/"],
-                },
-              ],
-            });
-          } catch (addError) {
-            console.error("Failed to add Open Campus Codex network:", addError);
-          }
-        } else {
-          console.error("Failed to switch to Open Campus Codex network:", switchError);
-        }
-      }
-    }
-  };
-
-  const ConnectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        // First, ensure we're on the correct network
-        await switchToOpenCampusNetwork();
-
-        // Now check if we're on the correct network
-        const chainId = await window.ethereum.request({
-          method: "eth_chainId",
-        });
-        
-        if (chainId !== "0xa045c") {
-          alert("Please connect to the Open Campus Codex network in MetaMask.");
-          return;
-        }
-
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        const accounts = await window.ethereum.request({
-          method: "eth_accounts",
-        });
-        setAccountAddress(accounts[0]);
-        setMmStatus("Connected!");
-        setIsConnected(true);
-      } catch (error) {
-        console.error("Failed to connect to wallet:", error);
-      }
-    } else {
-      alert("Please install MetaMask!");
-    }
-  };
+  const [accountAddress, setAccountAddress] = useState<string | undefined>(undefined);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if user is logged in with OCID
     if (authState.idToken) {
       const decodedToken = jwtDecode<DecodedToken>(authState.idToken);
       setOcidUsername(decodedToken.edu_username);
     }
-
-    // Initialize Web3 and set contract
-    (async () => {
-      try {
-        if (typeof window.ethereum !== "undefined") {
-          const web3 = new Web3(window.ethereum);
-          setWeb3(web3);
-          const networkId: any = await web3.eth.getChainId();
-          setGetNetwork(networkId);
-          const contractAddress = "0x48D2d71e26931a68A496F66d83Ca2f209eA9956E";
-          setContractAddress(contractAddress);
-          const Greeter = new web3.eth.Contract(
-            contractJson.abi,
-            contractAddress
-          ) as Contracts;
-          setContracts(Greeter);
-          Greeter.setProvider(window.ethereum);
-        } else {
-          alert("Please install MetaMask!");
-        }
-      } catch (error) {
-        console.error("Failed to initialize web3 or contract:", error);
-      }
-    })();
   }, [authState.idToken]);
 
+  const handleConnect = async (address: string) => {
+    try {
+      const web3Instance = new Web3(window.ethereum);
+      setWeb3(web3Instance);
+      setAccountAddress(address);
+      setIsConnected(true);
+
+      const contractAddress = "0x48D2d71e26931a68A496F66d83Ca2f209eA9956E";
+      const Greeter = new web3Instance.eth.Contract(
+        contractJson.abi,
+        contractAddress
+      ) as Contracts;
+      Greeter.setProvider(window.ethereum);
+      setContracts(Greeter);
+    } catch (error) {
+      console.error("Failed to initialize web3 or contract:", error);
+    }
+  };
+
+  const handleDisconnect = () => {
+    setWeb3(undefined);
+    setContracts(undefined);
+    setAccountAddress(undefined);
+    setIsConnected(false);
+  };
+
   const receive = async () => {
-    // Fetch message from the blockchain
     if (contracts) {
       try {
         const displayMessage = await contracts.methods.read().call();
@@ -149,7 +74,6 @@ const App: React.FC = () => {
   };
 
   const send = async () => {
-    // Send message to the blockchain
     const getMessage = (document.getElementById("message") as HTMLInputElement)
       .value;
     if (!getMessage.trim()) {
@@ -166,7 +90,6 @@ const App: React.FC = () => {
           .on("transactionHash", (hash: string) => {
             setTxnHash(hash);
           });
-        // Auto-refresh message after sending
         await receive();
       } catch (error) {
         console.error("Failed to write to contract:", error);
@@ -200,68 +123,57 @@ const App: React.FC = () => {
                 </h1>
               </div>
             )}
+            
+            <MetaMaskConnect
+              onConnect={handleConnect}
+              onDisconnect={handleDisconnect}
+            />
+
             {isConnected && (
-              <div className="text-center text-xl">
-                <h1>
-                  Connected to wallet address: <strong>{accountAddress}</strong>
-                </h1>
+              <div className="flex flex-col items-center">
+                <input
+                  type="text"
+                  placeholder="Enter a message to put onchain"
+                  id="message"
+                  className="w-80 bg-white rounded border border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:bg-white focus:border-indigo-500 text-base outline-none text-gray-700 px-3 leading-8 transition-colors duration-200 ease-in-out mb-4"
+                />
+                <div className="flex space-x-4">
+                  <Button
+                    className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded"
+                    onClick={send}
+                  >
+                    Send
+                  </Button>
+                  <Button
+                    className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded"
+                    onClick={receive}
+                  >
+                    Receive
+                  </Button>
+                </div>
+                {showMessage && (
+                  <>
+                    <p className="text-center text-sm mt-6"> loading...</p>
+                    <p className="mt-4 text-xs ">
+                      Txn hash:{" "}
+                      <a
+                        className="text-teal-300"
+                        href={
+                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {txnHash}
+                      </a>
+                    </p>
+                    <p className="mt-2 text-xs">
+                      Please wait till the Txn is completed :)
+                    </p>
+                  </>
+                )}
               </div>
             )}
-            {!isConnected && (
-              <Button
-                className="bg-teal-400 hover:bg-teal-700 text-black font-bold py-2 px-4 rounded-md mb-4"
-                onClick={ConnectWallet}
-                variant="link"
-              >
-                Connect with MetaMask
-              </Button>
-            )}
-            <div className="flex flex-col items-center">
-              <input
-                type="text"
-                placeholder="Enter a message to put onchain"
-                id="message"
-                className="w-80 bg-white rounded border border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:bg-white focus:border-indigo-500 text-base outline-none text-gray-700 px-3 leading-8 transition-colors duration-200 ease-in-out mb-4"
-              />
-              <div className="flex space-x-4">
-                <Button
-                  className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded"
-                  onClick={isConnected ? send : undefined}
-                >
-                  Send
-                </Button>
-                <Button
-                  className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded"
-                  onClick={isConnected ? receive : undefined}
-                >
-                  Receive
-                </Button>
-              </div>
-              {showMessage && (
-                <>
-                  <p className="text-center text-sm mt-6"> loading...</p>
-                  <p className="mt-4 text-xs ">
-                    Txn hash:{" "}
-                    <a
-                      className="text-teal-300"
-                      href={
-                        "https://opencampus-codex.blockscout.com/tx/" + txnHash
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {txnHash}
-                    </a>
-                  </p>
-                  <p className="mt-2 text-xs">
-                    Please wait till the Txn is completed :)
-                  </p>
-                </>
-              )}
-            </div>
-            <div className="text-center text-3xl mt-4">
-              <b>{displayMessage}</b>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -11,6 +11,7 @@ import { jwtDecode } from "jwt-decode";
 import { Contracts } from "@/types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { MetaMaskConnect } from "@/components/MetaMaskConnect";
 
 interface DecodedToken {
   edu_username: string;
@@ -25,12 +26,8 @@ interface Poll {
 
 const ClassPoll: React.FC = () => {
   const { authState } = useOCAuth();
-  const [mmStatus, setMmStatus] = useState<string>("Not connected!");
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [accountAddress, setAccountAddress] = useState<string | undefined>(undefined);
   const [web3, setWeb3] = useState<Web3 | undefined>(undefined);
   const [contracts, setContracts] = useState<Contracts | undefined>(undefined);
-  const [contractAddress, setContractAddress] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
   const [txnHash, setTxnHash] = useState<string | null>(null);
   const [showMessage, setShowMessage] = useState<boolean>(false);
@@ -39,92 +36,46 @@ const ClassPoll: React.FC = () => {
   const [newQuestion, setNewQuestion] = useState<string>("");
   const [newOptions, setNewOptions] = useState<string[]>(["", "", ""]);
   const [voteCountsUpdated, setVoteCountsUpdated] = useState<boolean>(false);
-
-  const switchToOpenCampusNetwork = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0xa045c" }],
-        });
-      } catch (switchError: any) {
-        if (switchError.code === 4902) {
-          try {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: "0xa045c",
-                  chainName: "Open Campus Codex",
-                  nativeCurrency: {
-                    name: "EDU",
-                    symbol: "EDU",
-                    decimals: 18,
-                  },
-                  rpcUrls: ["https://rpc.open-campus-codex.gelato.digital"],
-                  blockExplorerUrls: ["https://opencampus-codex.blockscout.com/"],
-                },
-              ],
-            });
-          } catch (addError) {
-            console.error("Failed to add Open Campus Codex network:", addError);
-          }
-        } else {
-          console.error("Failed to switch to Open Campus Codex network:", switchError);
-        }
-      }
-    }
-  };
-
-  const ConnectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        await switchToOpenCampusNetwork();
-        const chainId = await window.ethereum.request({ method: "eth_chainId" });
-        if (chainId !== "0xa045c") {
-          alert("Please connect to the Open Campus Codex network in MetaMask.");
-          return;
-        }
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        const accounts = await window.ethereum.request({ method: "eth_accounts" });
-        setAccountAddress(accounts[0]);
-        setMmStatus("Connected!");
-        setIsConnected(true);
-      } catch (error) {
-        console.error("Failed to connect to wallet:", error);
-      }
-    } else {
-      alert("Please install MetaMask!");
-    }
-  };
+  const [accountAddress, setAccountAddress] = useState<string | undefined>(undefined);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
     if (authState.idToken) {
       const decodedToken = jwtDecode<DecodedToken>(authState.idToken);
       setOcidUsername(decodedToken.edu_username);
     }
-
-    (async () => {
-      try {
-        if (typeof window.ethereum !== "undefined") {
-          const web3 = new Web3(window.ethereum);
-          setWeb3(web3);
-          const contractAddress = "0x82D4bF11eA7d4295F94f9f6Ae4Bd04B91CCE11AA";
-          setContractAddress(contractAddress);
-          const ClassPoll = new web3.eth.Contract(
-            contractJson.abi,
-            contractAddress
-          ) as Contracts;
-          setContracts(ClassPoll);
-          ClassPoll.setProvider(window.ethereum);
-        } else {
-          alert("Please install MetaMask!");
-        }
-      } catch (error) {
-        console.error("Failed to initialize web3 or contract:", error);
-      }
-    })();
   }, [authState.idToken]);
+
+  const handleConnect = async (address: string) => {
+    try {
+      const web3Instance = new Web3(window.ethereum);
+      setWeb3(web3Instance);
+      setAccountAddress(address);
+      setIsConnected(true);
+
+      const contractAddress = "0x82D4bF11eA7d4295F94f9f6Ae4Bd04B91CCE11AA";
+      const ClassPoll = new web3Instance.eth.Contract(
+        contractJson.abi,
+        contractAddress
+      ) as Contracts;
+      ClassPoll.setProvider(window.ethereum);
+      setContracts(ClassPoll);
+
+      // Fetch current poll after connection
+      await fetchCurrentPoll();
+    } catch (error) {
+      console.error("Failed to initialize web3 or contract:", error);
+    }
+  };
+
+  const handleDisconnect = () => {
+    setWeb3(undefined);
+    setContracts(undefined);
+    setAccountAddress(undefined);
+    setIsConnected(false);
+    setCurrentPoll(null);
+    setVoteCountsUpdated(false);
+  };
 
   const createPoll = async () => {
     if (!newQuestion.trim() || newOptions.some(option => !option.trim())) {
@@ -142,6 +93,8 @@ const ClassPoll: React.FC = () => {
             setTxnHash(hash);
           });
         await fetchCurrentPoll();
+        setNewQuestion("");
+        setNewOptions(["", "", ""]);
       } catch (error) {
         console.error("Failed to create poll:", error);
       }
@@ -207,12 +160,6 @@ const ClassPoll: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isConnected) {
-      fetchCurrentPoll();
-    }
-  }, [isConnected]);
-
-  useEffect(() => {
     if (isConnected && currentPoll) {
       const interval = setInterval(fetchVoteCounts, 5000);
       return () => clearInterval(interval);
@@ -241,92 +188,82 @@ const ClassPoll: React.FC = () => {
                 </h1>
               </div>
             )}
+
+            <MetaMaskConnect
+              onConnect={handleConnect}
+              onDisconnect={handleDisconnect}
+            />
+
             {isConnected && (
-              <div className="text-center text-xl">
-                <h1>
-                  Connected to wallet address: <strong>{accountAddress}</strong>
-                </h1>
-              </div>
-            )}
-            {!isConnected && (
-              <Button
-                className="bg-teal-400 hover:bg-teal-700 text-black font-bold py-2 px-4 rounded-md mb-4"
-                onClick={ConnectWallet}
-                variant="link"
-              >
-                Connect with MetaMask
-              </Button>
-            )}
-            {isConnected && (
-              <div className="w-full space-y-4">
-                <Input
-                  type="text"
-                  placeholder="Enter poll question"
-                  value={newQuestion}
-                  onChange={(e) => setNewQuestion(e.target.value)}
-                  className="w-full"
-                />
-                {newOptions.map((option, index) => (
+              <div className="w-full space-y-6">
+                <div className="space-y-4">
                   <Input
-                    key={index}
                     type="text"
-                    placeholder={`Option ${index + 1}`}
-                    value={option}
-                    onChange={(e) => {
-                      const updatedOptions = [...newOptions];
-                      updatedOptions[index] = e.target.value;
-                      setNewOptions(updatedOptions);
-                    }}
+                    placeholder="Enter poll question"
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
                     className="w-full"
                   />
-                ))}
-                <Button
-                  className="w-full bg-teal-300 hover:bg-teal-700 text-black font-bold py-2 px-4 rounded"
-                  onClick={createPoll}
-                >
-                  Create Poll
-                </Button>
-              </div>
-            )}
-            {currentPoll && (
-              <div className="w-full space-y-4">
-                <h2 className="text-2xl font-bold">{currentPoll.question}</h2>
-                {currentPoll.options.map((option, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <span>{option}</span>
-                    <div className="space-x-2">
-                      <span>{currentPoll.votes[index]} votes</span>
-                      <Button
-                        className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-4 rounded"
-                        onClick={() => vote(index)}
-                      >
-                        Vote
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {showMessage && (
-              <>
-                <p className="text-center text-sm mt-6"> loading...</p>
-                <p className="mt-4 text-xs ">
-                  Txn hash:{" "}
-                  <a
-                    className="text-teal-300"
-                    href={
-                      "https://opencampus-codex.blockscout.com/tx/" + txnHash
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  {newOptions.map((option, index) => (
+                    <Input
+                      key={index}
+                      type="text"
+                      placeholder={`Option ${index + 1}`}
+                      value={option}
+                      onChange={(e) => {
+                        const updatedOptions = [...newOptions];
+                        updatedOptions[index] = e.target.value;
+                        setNewOptions(updatedOptions);
+                      }}
+                      className="w-full"
+                    />
+                  ))}
+                  <Button
+                    className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded w-full"
+                    onClick={createPoll}
                   >
-                    {txnHash}
-                  </a>
-                </p>
-                <p className="mt-2 text-xs">
-                  Please wait till the Txn is completed :)
-                </p>
-              </>
+                    Create Poll
+                  </Button>
+                </div>
+
+                {currentPoll && (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold">{currentPoll.question}</h2>
+                    {currentPoll.options.map((option, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <Button
+                          className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded w-3/4"
+                          onClick={() => vote(index)}
+                        >
+                          {option}
+                        </Button>
+                        <span className="text-xl font-bold">
+                          Votes: {currentPoll.votes[index]}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {showMessage && (
+                  <>
+                    <p className="text-center text-sm mt-6">Processing transaction...</p>
+                    <p className="mt-2 text-xs">
+                      Txn hash:{" "}
+                      <a
+                        className="text-teal-300"
+                        href={
+                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {txnHash}
+                      </a>
+                    </p>
+                  </>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>

@@ -12,6 +12,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { MetaMaskConnect } from "@/components/MetaMaskConnect";
 
 interface DecodedToken {
   edu_username: string;
@@ -27,9 +28,6 @@ interface Submission {
 
 export default function Component() {
   const { authState } = useOCAuth();
-  const [mmStatus, setMmStatus] = useState<string>("Not connected!");
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [accountAddress, setAccountAddress] = useState<string | undefined>(undefined);
   const [web3, setWeb3] = useState<Web3 | undefined>(undefined);
   const [contract, setContract] = useState<any>(undefined);
   const [ocidUsername, setOcidUsername] = useState<string | null>(null);
@@ -39,95 +37,47 @@ export default function Component() {
   const [txnHash, setTxnHash] = useState<string | null>(null);
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [isEducator, setIsEducator] = useState<boolean>(false);
-
-  const switchToOpenCampusNetwork = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0xa045c" }],
-        });
-      } catch (switchError: any) {
-        if (switchError.code === 4902) {
-          try {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: "0xa045c",
-                  chainName: "Open Campus Codex",
-                  nativeCurrency: {
-                    name: "EDU",
-                    symbol: "EDU",
-                    decimals: 18,
-                  },
-                  rpcUrls: ["https://rpc.open-campus-codex.gelato.digital"],
-                  blockExplorerUrls: ["https://opencampus-codex.blockscout.com/"],
-                },
-              ],
-            });
-          } catch (addError) {
-            console.error("Failed to add Open Campus Codex network:", addError);
-          }
-        } else {
-          console.error("Failed to switch to Open Campus Codex network:", switchError);
-        }
-      }
-    }
-  };
-
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        await switchToOpenCampusNetwork();
-        const chainId = await window.ethereum.request({ method: "eth_chainId" });
-        
-        if (chainId !== "0xa045c") {
-          alert("Please connect to the Open Campus Codex network in MetaMask.");
-          return;
-        }
-
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        const accounts = await window.ethereum.request({ method: "eth_accounts" });
-        setAccountAddress(accounts[0]);
-        setMmStatus("Connected!");
-        setIsConnected(true);
-      } catch (error) {
-        console.error("Failed to connect to wallet:", error);
-      }
-    } else {
-      alert("Please install MetaMask!");
-    }
-  };
+  const [accountAddress, setAccountAddress] = useState<string | undefined>(undefined);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
     if (authState.idToken) {
       const decodedToken = jwtDecode<DecodedToken>(authState.idToken);
       setOcidUsername(decodedToken.edu_username);
-      // Change this to the actual educator OCID username like "edu_"
-      setIsEducator(decodedToken.edu_username.startsWith("asharib")); 
+      setIsEducator(decodedToken.edu_username.startsWith("asharib"));
     }
-
-    (async () => {
-      try {
-        if (typeof window.ethereum !== "undefined") {
-          const web3 = new Web3(window.ethereum);
-          setWeb3(web3);
-          const contractAddress = "0x0EA845BCC2bafD0C54cD0CFfCEF23B57aac439ED"; // Replace with your deployed contract address
-          const AssignmentSubmission = new web3.eth.Contract(
-            contractJson.abi,
-            contractAddress
-          );
-          setContract(AssignmentSubmission);
-          AssignmentSubmission.setProvider(window.ethereum);
-        } else {
-          alert("Please install MetaMask!");
-        }
-      } catch (error) {
-        console.error("Failed to initialize web3 or contract:", error);
-      }
-    })();
   }, [authState.idToken]);
+
+  const handleConnect = async (address: string) => {
+    try {
+      const web3Instance = new Web3(window.ethereum);
+      setWeb3(web3Instance);
+      setAccountAddress(address);
+      setIsConnected(true);
+
+      const contractAddress = "0x0EA845BCC2bafD0C54cD0CFfCEF23B57aac439ED";
+      const AssignmentSubmission = new web3Instance.eth.Contract(
+        contractJson.abi,
+        contractAddress
+      );
+      AssignmentSubmission.setProvider(window.ethereum);
+      setContract(AssignmentSubmission);
+
+      if (isEducator) {
+        await fetchSubmissions();
+      }
+    } catch (error) {
+      console.error("Failed to initialize web3 or contract:", error);
+    }
+  };
+
+  const handleDisconnect = () => {
+    setWeb3(undefined);
+    setContract(undefined);
+    setAccountAddress(undefined);
+    setIsConnected(false);
+    setSubmissions([]);
+  };
 
   const submitAssignment = async () => {
     if (!assignmentHash.trim()) {
@@ -193,11 +143,14 @@ export default function Component() {
     }
   };
 
+  // Auto-refresh submissions for educators
   useEffect(() => {
-    if (contract && isEducator) {
-      fetchSubmissions();
+    let interval: NodeJS.Timeout;
+    if (isConnected && isEducator && contract) {
+      interval = setInterval(fetchSubmissions, 5000);
     }
-  }, [contract, isEducator]);
+    return () => clearInterval(interval);
+  }, [isConnected, isEducator, contract]);
 
   return (
     <div className="App min-h-screen flex flex-col items-center justify-between">
@@ -221,85 +174,102 @@ export default function Component() {
                 </h1>
               </div>
             )}
+
+            <MetaMaskConnect
+              onConnect={handleConnect}
+              onDisconnect={handleDisconnect}
+            />
+
             {isConnected && (
-              <div className="text-center text-xl">
-                <h1>
-                  Connected to wallet address: <strong>{accountAddress}</strong>
-                </h1>
-              </div>
-            )}
-            {!isConnected && (
-              <Button
-                className="bg-teal-400 hover:bg-teal-700 text-black font-bold py-2 px-4 rounded-md mb-4"
-                onClick={connectWallet}
-                variant="link"
-              >
-                Connect with MetaMask
-              </Button>
-            )}
-            <div className="flex flex-col items-center w-full">
-              <Input
-                type="text"
-                placeholder="Enter assignment hash or URL"
-                value={assignmentHash}
-                onChange={(e) => setAssignmentHash(e.target.value)}
-                className="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:bg-white focus:border-indigo-500 text-base outline-none text-gray-700 px-3 leading-8 transition-colors duration-200 ease-in-out mb-4"
-              />
-              <Button
-                className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded w-full"
-                onClick={isConnected ? submitAssignment : undefined}
-                disabled={!isConnected || loading}
-              >
-                {loading ? "Submitting..." : "Submit Assignment"}
-              </Button>
-              {showMessage && (
-                <Alert className="mt-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Transaction Submitted</AlertTitle>
-                  <AlertDescription>
-                    Txn hash:{" "}
-                    <a
-                      className="text-teal-300"
-                      href={
-                        "https://opencampus-codex.blockscout.com/tx/" + txnHash
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {txnHash}
-                    </a>
-                    <p>Please wait until the transaction is completed.</p>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-            {isEducator && (
-              <div className="w-full mt-8">
-                <h2 className="text-2xl font-bold mb-4">Submissions</h2>
-                {submissions.map((submission, index) => (
-                  <div key={index} className="border-b py-2">
-                    <p>Student: {submission.student}</p>
-                    <p>Assignment Hash: {submission.assignmentHash}</p>
-                    <p>Timestamp: {new Date(submission.timestamp * 1000).toLocaleString()}</p>
-                    <p>Verified: {submission.verified ? "Yes" : "No"}</p>
-                    {!submission.verified && (
-                      <Button
-                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-4 rounded mt-2"
-                        onClick={() => verifySubmission(index)}
-                      >
-                        Verify Submission
-                      </Button>
-                    )}
+              <div className="flex flex-col items-center w-full">
+                <Input
+                  type="text"
+                  placeholder="Enter assignment hash or URL"
+                  value={assignmentHash}
+                  onChange={(e) => setAssignmentHash(e.target.value)}
+                  className="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:bg-white focus:border-indigo-500 text-base outline-none text-gray-700 px-3 leading-8 transition-colors duration-200 ease-in-out mb-4"
+                />
+                <Button
+                  className="bg-teal-300 hover:bg-teal-700 text-black font-bold py-1 px-6 rounded w-full"
+                  onClick={submitAssignment}
+                  disabled={loading}
+                >
+                  {loading ? "Submitting..." : "Submit Assignment"}
+                </Button>
+
+                {isEducator && submissions.length > 0 && (
+                  <div className="mt-8 w-full">
+                    <h2 className="text-2xl font-bold mb-4">Submissions:</h2>
+                    <div className="space-y-4">
+                      {submissions.map((submission, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-100 p-4 rounded-lg flex justify-between items-center"
+                        >
+                          <div>
+                            <p>
+                              <strong>Student:</strong>{" "}
+                              {submission.student.slice(0, 6)}...
+                              {submission.student.slice(-4)}
+                            </p>
+                            <p>
+                              <strong>Hash:</strong> {submission.assignmentHash}
+                            </p>
+                            <p>
+                              <strong>Time:</strong>{" "}
+                              {new Date(
+                                submission.timestamp * 1000
+                              ).toLocaleString()}
+                            </p>
+                            <p>
+                              <strong>Status:</strong>{" "}
+                              {submission.verified ? "Verified" : "Pending"}
+                            </p>
+                          </div>
+                          {!submission.verified && (
+                            <Button
+                              className="bg-green-500 hover:bg-green-700 text-white"
+                              onClick={() => verifySubmission(index)}
+                            >
+                              Verify
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+
+                {showMessage && (
+                  <>
+                    <p className="text-center text-sm mt-6">
+                      {loading ? "Processing..." : "Transaction sent!"}
+                    </p>
+                    <p className="mt-2 text-xs">
+                      Txn hash:{" "}
+                      <a
+                        className="text-teal-300"
+                        href={
+                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {txnHash}
+                      </a>
+                    </p>
+                  </>
+                )}
               </div>
             )}
+
             {!isEducator && (
               <Alert className="mt-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Student View</AlertTitle>
                 <AlertDescription>
-                  As a student, you can submit assignments but cannot view all submissions, only educators with ocid (edu_) can see it.
+                  As a student, you can submit assignments but cannot verify submissions.
+                  Only educators can verify submitted assignments.
                 </AlertDescription>
               </Alert>
             )}

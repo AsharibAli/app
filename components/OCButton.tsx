@@ -1,22 +1,48 @@
 import React, { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
-interface OCButtonProps {
-  onClick: () => void; 
+interface OCButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
+  variant?: "default" | "outline";
+  size?: "sm" | "md" | "lg";
 }
 
-const OCButton: React.FC<OCButtonProps> = ({ onClick, children }) => {
+const OCButton: React.FC<OCButtonProps> = ({
+  onClick,
+  children,
+  variant = "default",
+  size = "md",
+  className,
+  disabled,
+  ...props
+}) => {
+  const baseStyles =
+    "relative inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:pointer-events-none disabled:opacity-50";
+
+  const variants = {
+    default: "bg-black text-white hover:bg-gray-800",
+    outline: "border-2 border-black text-black hover:bg-gray-100",
+  };
+
+  const sizes = {
+    sm: "px-4 py-1.5 text-sm",
+    md: "px-6 py-2 text-base",
+    lg: "px-8 py-3 text-lg",
+  };
+
   return (
     <button
       onClick={onClick}
-      className="bg-black text-white rounded-full border border-gray-300 px-6 py-2"
+      disabled={disabled}
+      className={cn(baseStyles, variants[variant], sizes[size], className)}
+      {...props}
     >
-      <div className="flex items-center justify-center space-x-2">
+      <div className="flex items-center justify-center space-x-3">
         <svg
-          className="h-12 w-12" 
+          className="h-8 w-8"
           fill="currentColor"
           xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 44 44" 
+          viewBox="0 0 44 44"
         >
           <path
             d="M24.8855 10.2053C22.4605 10.2348 20.0985 10.9636 18.0969 12.3001C16.0952 13.6365 14.5432 15.5209 13.6361 17.7161C12.729 19.9114 12.5073 22.3194 12.9989 24.6373C13.4906 26.9552 14.6735 29.0794 16.399 30.7427C18.1245 32.406 20.3155 33.5342 22.6963 33.9851C25.0771 34.4361 27.5413 34.1897 29.779 33.2771C32.0167 32.3645 33.9279 30.8264 35.2721 28.8562C36.6164 26.886 37.3336 24.5718 37.3337 22.2048C37.3131 19.0025 35.99 15.9392 33.6556 13.6889C31.3211 11.4386 28.1665 10.1855 24.8855 10.2053Z"
@@ -35,7 +61,7 @@ const OCButton: React.FC<OCButtonProps> = ({ onClick, children }) => {
             fill="#141BEB"
           />
         </svg>
-        <div className="text-xl">{children}</div>
+        <span className="font-medium">{children}</span>
       </div>
     </button>
   );
