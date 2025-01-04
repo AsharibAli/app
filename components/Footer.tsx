@@ -30,7 +30,7 @@ const Footer = () => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            X (Twitter).
+            X (Twitter)
           </a>
         </h1>
         <Image
