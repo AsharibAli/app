@@ -17,11 +17,11 @@ import { useBanner } from "./BannerContext";
 const BANNER_CONFIG = {
   title: "➡️ EduHub is Live on EDU Chain Mainnet 🔥",
   description:
-    "Start executing on-chain transactions with our six listed dApps on the EDU Chain mainnet and earn up to $10,000 in EDU rewards—and, most importantly, Yuzy Points! 👀",
+    "Start interacting with EduHub today to earn $200 USDT, a share of $10,000 in EDU rewards, and most importantly, 15,682,492 Yuzy Points! 👀🍊",
   buttons: {
     primary: {
       text: "Start Earning",
-      href: "https://taskon.xyz/EduHub/",
+      href: "https://rewards.taskon.xyz/quest/306835034",
     },
     secondary: {
       text: "Start Building",
