@@ -159,7 +159,7 @@ const App: React.FC = () => {
                       <a
                         className="text-teal-300"
                         href={
-                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                          "https://educhain.blockscout.com/tx/" + txnHash
                         }
                         target="_blank"
                         rel="noopener noreferrer"

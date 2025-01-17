@@ -80,11 +80,10 @@ export default function Home() {
         {/* Adjusted spacing */}
         <div className="text-center mb-10">
           <h1 className="text-5xl font-extrabold text-teal-800 mb-6">
-            EduKit | create-edu-dapp
+            EduHub
           </h1>
           <p className="text-2xl text-teal-600 max-w-2xl mx-auto leading-relaxed">
-            Explore our collection of educational dApps designed to help you
-            build and ship fast on EduChain.
+          Explore our educational dApps designed to help you complete tasks on EDU Chain
           </p>
         </div>
 

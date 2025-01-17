@@ -9,9 +9,9 @@ import { BannerProvider } from "@/components/BannerContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "EduKit 🔥|  Starter Kit 💻",
+  title: "EduHub dApp 🔥",
   description:
-    "A starter-kit featuring React & NextJS and Vue & NuxtJS with Hardhat or Foundry for building dApps on the Open Campus L3 (EduChain).",
+    "⚡EduHub is building community and developer tools for EduChain 🚀",
 };
 
 export default function RootLayout({

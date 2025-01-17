@@ -12,7 +12,7 @@ const Footer = () => {
           height="50"
         />
         <h1 className="text-xl text-black">
-          Build with ❤️ by{" "}
+          Build with 💙 by{" "}
           <strong>
             <a
               href="https://eduhub.dev/"
@@ -23,7 +23,7 @@ const Footer = () => {
               EduHub
             </a>{" "}
           </strong>
-          , Follow us on{" "}
+          , Follow on{" "}
           <a
             className="text-teal-300 no-underline hover:underline hover:text-teal-700"
             href="https://x.com/eduhub__"

@@ -47,7 +47,7 @@ const StudyTracker: React.FC = () => {
       setAccountAddress(address);
       setIsConnected(true);
 
-      const contractAddress = "0x4592d03bf91Ba5667F2C064A3CC122917EC41f1F";
+      const contractAddress = "0x00002037A09AB6c78eE38b2D51B2795a8C528589";
       const StudyTracker = new web3Instance.eth.Contract(
         contractJson.abi,
         contractAddress
@@ -192,7 +192,7 @@ const StudyTracker: React.FC = () => {
                       <a
                         className="text-teal-300"
                         href={
-                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                          "https://educhain.blockscout.com/tx/" + txnHash
                         }
                         target="_blank"
                         rel="noopener noreferrer"

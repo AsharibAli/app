@@ -74,14 +74,15 @@ const UserPage = () => {
             {userInfo && (
               <CardContent>
                 <div>
+
                   <p>
                     <strong>User ID:</strong> {userInfo.user_id}
+                  </p>            
+                  <p>
+                    <strong>(OCID) Username:</strong> {userInfo.edu_username}
                   </p>
                   <p>
-                    <strong>Ethereum Address:</strong> {userInfo.eth_address}
-                  </p>
-                  <p>
-                    <strong>Username:</strong> {userInfo.edu_username}
+                    <strong>(OCID) Wallet Address:</strong> {userInfo.eth_address}
                   </p>
                   <p>
                     <strong>Issuer:</strong> {userInfo.iss}
@@ -97,6 +98,7 @@ const UserPage = () => {
                   <p>
                     <strong>Audience:</strong> {userInfo.aud}
                   </p>
+
                 </div>
               </CardContent>
             )}

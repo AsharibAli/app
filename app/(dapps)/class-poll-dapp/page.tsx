@@ -53,7 +53,7 @@ const ClassPoll: React.FC = () => {
       setAccountAddress(address);
       setIsConnected(true);
 
-      const contractAddress = "0x82D4bF11eA7d4295F94f9f6Ae4Bd04B91CCE11AA";
+      const contractAddress = "0xd6374c1A42464df6db7E4a34fc54Cb94FA1817E9";
       const ClassPoll = new web3Instance.eth.Contract(
         contractJson.abi,
         contractAddress
@@ -253,7 +253,7 @@ const ClassPoll: React.FC = () => {
                       <a
                         className="text-teal-300"
                         href={
-                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                          "https://educhain.blockscout.com/tx/" + txnHash
                         }
                         target="_blank"
                         rel="noopener noreferrer"

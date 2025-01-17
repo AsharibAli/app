@@ -55,7 +55,7 @@ export default function Component() {
       setAccountAddress(address);
       setIsConnected(true);
 
-      const contractAddress = "0x0EA845BCC2bafD0C54cD0CFfCEF23B57aac439ED";
+      const contractAddress = "0x2917CAaf110A3F3F89C2aC2DFFf4172A7eB13F27";
       const AssignmentSubmission = new web3Instance.eth.Contract(
         contractJson.abi,
         contractAddress
@@ -250,7 +250,7 @@ export default function Component() {
                       <a
                         className="text-teal-300"
                         href={
-                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                          "https://educhain.blockscout.com/tx/" + txnHash
                         }
                         target="_blank"
                         rel="noopener noreferrer"

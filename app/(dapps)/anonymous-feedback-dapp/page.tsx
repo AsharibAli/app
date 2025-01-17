@@ -49,7 +49,7 @@ const FeedbackApp: React.FC = () => {
       setAccountAddress(address);
       setIsConnected(true);
 
-      const contractAddress = "0x5E953eF799f59D2589b72c19c05A7e02EAbcdf0C";
+      const contractAddress = "0x1f99874fa16F5228b518e475CaF29d340BbA403f";
       const AnonymousFeedback = new web3Instance.eth.Contract(
         contractJson.abi,
         contractAddress
@@ -177,7 +177,7 @@ const FeedbackApp: React.FC = () => {
                       <a
                         className="text-teal-300"
                         href={
-                          "https://opencampus-codex.blockscout.com/tx/" + txnHash
+                          "https://educhain.blockscout.com/tx/" + txnHash
                         }
                         target="_blank"
                         rel="noopener noreferrer"

@@ -15,17 +15,17 @@ import { cn } from "@/lib/utils";
 import { useBanner } from "./BannerContext";
 
 const BANNER_CONFIG = {
-  title: "Earn from 250k Rewards Pool",
+  title: "➡️ EduHub is Live on EDU Chain Mainnet 🔥",
   description:
-    "Participate in the Open Campus Semester 2 Hackathon, learn, build, and ship a project quickly with the help of EduHub, and get rewarded for your contributions to EduChain.",
+    "Start executing on-chain transactions with our six listed dApps on the EDU Chain mainnet and earn up to $10,000 in EDU rewards—and, most importantly, Yuzy Points! 👀",
   buttons: {
     primary: {
-      text: "Start Building",
-      href: "https://eduhub.dev/",
+      text: "Start Earning",
+      href: "https://taskon.xyz/EduHub/",
     },
     secondary: {
-      text: "More About Hackathon",
-      href: "https://www.risein.com/bootcamps/edu-chain-hackathon-semester-2",
+      text: "Start Building",
+      href: "https://eduhub.dev/",
     },
   },
 };
@@ -58,7 +58,7 @@ const Banner = () => {
       aria-modal="true"
       aria-labelledby="banner-title"
     >
-      <Card className="w-full max-w-lg relative animate-in slide-in-from-bottom-4 duration-500">
+      <Card className="w-full max-w-xl relative animate-in slide-in-from-bottom-4 duration-500">
         <button
           onClick={hideBanner}
           className="absolute right-4 top-4 p-1 hover:bg-gray-100 rounded-full transition-colors"

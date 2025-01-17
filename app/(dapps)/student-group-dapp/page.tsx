@@ -25,7 +25,7 @@ interface DecodedToken {
   [key: string]: any
 }
 
-const contractAddress = '0x158f83cD37e7774b520ADCb9BD7bc80330378c1B'
+const contractAddress = '0x82E7ADFe34DC795475582133Ffe91147f22e0c39'
 
 export default function StudyGroup() {
   const { authState } = useOCAuth()

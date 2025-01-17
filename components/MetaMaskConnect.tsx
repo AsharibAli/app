@@ -10,7 +10,7 @@ interface MetaMaskConnectProps {
   className?: string;
 }
 
-const OPEN_CAMPUS_CHAIN_ID = "0xa045c";
+const EDU_CHAIN_ID = "0xa3c3";
 
 export const MetaMaskConnect: React.FC<MetaMaskConnectProps> = ({
   onConnect,
@@ -59,7 +59,7 @@ export const MetaMaskConnect: React.FC<MetaMaskConnectProps> = ({
           const chainId = await window.ethereum.request({
             method: "eth_chainId",
           });
-          if (chainId === OPEN_CAMPUS_CHAIN_ID) {
+          if (chainId === EDU_CHAIN_ID) {
             setAccountAddress(accounts[0]);
             setIsConnected(true);
             onConnect?.(accounts[0]);
@@ -81,7 +81,7 @@ export const MetaMaskConnect: React.FC<MetaMaskConnectProps> = ({
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: OPEN_CAMPUS_CHAIN_ID }],
+          params: [{ chainId: EDU_CHAIN_ID }],
         });
       } catch (switchError: any) {
         if (switchError.code === 4902) {
@@ -90,16 +90,16 @@ export const MetaMaskConnect: React.FC<MetaMaskConnectProps> = ({
               method: "wallet_addEthereumChain",
               params: [
                 {
-                  chainId: OPEN_CAMPUS_CHAIN_ID,
-                  chainName: "Open Campus Codex",
+                  chainId: EDU_CHAIN_ID,
+                  chainName: "EDU Chain",
                   nativeCurrency: {
                     name: "EDU",
                     symbol: "EDU",
                     decimals: 18,
                   },
-                  rpcUrls: ["https://rpc.open-campus-codex.gelato.digital"],
+                  rpcUrls: ["https://rpc.edu-chain.raas.gelato.cloud"],
                   blockExplorerUrls: [
-                    "https://opencampus-codex.blockscout.com/",
+                    "https://educhain.blockscout.com/",
                   ],
                 },
               ],
@@ -146,7 +146,7 @@ export const MetaMaskConnect: React.FC<MetaMaskConnectProps> = ({
   };
 
   const handleChainChanged = async (chainId: string) => {
-    if (chainId !== OPEN_CAMPUS_CHAIN_ID) {
+    if (chainId !== EDU_CHAIN_ID) {
       toast({
         variant: "destructive",
         title: "Network Error",
@@ -177,7 +177,7 @@ export const MetaMaskConnect: React.FC<MetaMaskConnectProps> = ({
       await switchToOpenCampusNetwork();
       const chainId = await window.ethereum.request({ method: "eth_chainId" });
 
-      if (chainId !== OPEN_CAMPUS_CHAIN_ID) {
+      if (chainId !== EDU_CHAIN_ID) {
         toast({
           variant: "destructive",
           title: "Network Error",
