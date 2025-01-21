@@ -9,7 +9,7 @@ interface OCIDProviderProps {
 
 const opts = {
   redirectUri: "https://app.eduhub.dev/redirect",
-  referralCode: "ASHARIB",
+  referralCode: "5C7KSI",
 };
 
 const OCIDProvider: FC<OCIDProviderProps> = ({ children }) => (
